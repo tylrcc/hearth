@@ -1,0 +1,5 @@
+2026-06-07T09:14:02Z INFO  user jane.doe@example.com signed in from 203.0.113.47
+2026-06-07T09:14:03Z DEBUG issuing session jwt eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NDIifQ.dQw4w9WgXcQ8s7Hn0pZ
+2026-06-07T09:14:05Z INFO  charging card 4242424242424242 via stripe key sk_test_EXAMPLE00000000000000000000
+2026-06-07T09:14:06Z WARN  retry against db at 10.0.0.42 using token ghp_EXAMPLE0000000000000000000000000000
+2026-06-07T09:14:09Z INFO  support callback queued for +1 415-555-0137

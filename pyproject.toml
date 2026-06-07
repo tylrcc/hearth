@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hearth-cli"
+version = "0.1.0"
+description = "Local-LLM tools for your terminal: redact secrets & search code by meaning, 100% offline."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [{ name = "tuwfy" }]
+keywords = ["llm", "ollama", "local-llm", "privacy", "redaction", "pii", "semantic-search", "cli", "offline"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "click>=8.1",
+    "rich>=13.0",
+    "numpy>=1.23",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.urls]
+Homepage = "https://github.com/tylrcc/hearth"
+Repository = "https://github.com/tylrcc/hearth"
+Issues = "https://github.com/tylrcc/hearth/issues"
+
+[project.scripts]
+hearth = "hearth.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["hearth"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
