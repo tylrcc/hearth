@@ -7,13 +7,22 @@
 [![CI](https://github.com/tylrcc/hearth/actions/workflows/ci.yml/badge.svg)](https://github.com/tylrcc/hearth/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
-[![Powered by Ollama](https://img.shields.io/badge/powered%20by-Ollama-black.svg)](https://ollama.com)
+
+#### Works with your runtime of choice
+
+[![Ollama](https://img.shields.io/badge/Ollama-✓-000000?logo=ollama&logoColor=white)](https://ollama.com)
+[![llama.cpp](https://img.shields.io/badge/llama.cpp-✓-2ea44f)](https://github.com/ggml-org/llama.cpp)
+[![MLX](https://img.shields.io/badge/MLX-✓-2ea44f)](https://github.com/ml-explore/mlx-lm)
+[![LM Studio](https://img.shields.io/badge/LM_Studio-✓-2ea44f)](https://lmstudio.ai)
+[![vLLM](https://img.shields.io/badge/vLLM-✓-2ea44f)](https://github.com/vllm-project/vllm)
 
 </div>
 
 ---
 
-`hearth` is a small kit of privacy-first command-line tools powered by your **own** local models through [Ollama](https://ollama.com). Two tools today, both designed around one idea: the most sensitive things you do, like your secrets and your source code, should never have to touch someone else's server.
+`hearth` is a small kit of privacy-first command-line tools powered by your **own** local models. Two tools today, both designed around one idea: the most sensitive things you do, like your secrets and your source code, should never have to touch someone else's server.
+
+> **🔌 Bring your own runtime.** hearth runs on [Ollama](https://ollama.com) (default), [llama.cpp](https://github.com/ggml-org/llama.cpp), [MLX](https://github.com/ml-explore/mlx-lm), [LM Studio](https://lmstudio.ai), [vLLM](https://github.com/vllm-project/vllm), or **any** OpenAI-compatible server. One flag: `--backend llamacpp`, `--backend mlx`, ... See [Backends](#prefer-llamacpp-mlx-or-something-else).
 
 | Tool | What it does |
 |------|--------------|
