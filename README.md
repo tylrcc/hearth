@@ -173,7 +173,7 @@ Contributions welcome, especially new redaction detectors and language-aware chu
 
 ## License
 
-[MIT](LICENSE) © tuwfy
+[MIT](LICENSE) © tylrcc
 
 <div align="center">
 <sub>Built for people who would rather keep their secrets at home. If hearth saved you from a leak, consider leaving a ⭐.</sub>

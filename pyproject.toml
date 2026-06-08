@@ -9,7 +9,7 @@ description = "Local-LLM tools for your terminal: redact secrets & search code b
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
-authors = [{ name = "tuwfy" }]
+authors = [{ name = "tylrcc" }]
 keywords = ["llm", "ollama", "local-llm", "privacy", "redaction", "pii", "semantic-search", "cli", "offline"]
 classifiers = [
     "Development Status :: 4 - Beta",
