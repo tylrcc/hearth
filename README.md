@@ -63,6 +63,20 @@ hearth doctor
 
 > No GPU required. Any model in `ollama list` works; point hearth at a different one with `--model` or the `HEARTH_CHAT_MODEL` / `HEARTH_EMBED_MODEL` env vars.
 
+### Prefer llama.cpp, MLX, or something else?
+
+Ollama is the default, but hearth talks to **any** local runtime: [llama.cpp](https://github.com/ggml-org/llama.cpp) (`llama-server`), [MLX](https://github.com/ml-explore/mlx-lm) (`mlx_lm.server`), [LM Studio](https://lmstudio.ai), [vLLM](https://github.com/vllm-project/vllm), or anything exposing an OpenAI-compatible `/v1` API.
+
+```bash
+# llama.cpp:  llama-server -m model.gguf --embeddings --port 8080
+# MLX:        mlx_lm.server --port 8080
+hearth doctor --backend llamacpp
+hearth search "retry logic" --backend mlx
+hearth redact --llm report.md --backend openai --url http://localhost:8080/v1
+```
+
+Pick a backend per-command with `--backend` (`ollama`, `llamacpp`, `mlx`, `lmstudio`, `vllm`, `openai`), override its address with `--url`, or set it once via `HEARTH_BACKEND` / `HEARTH_BASE_URL`. Note: semantic search needs an embedding model on your server (for llama.cpp, start it with `--embeddings`), and reasoning models are slower over the `/v1` API since it can't disable thinking.
+
 ---
 
 ## 🛡️ `hearth redact` — scrub secrets before they leak
@@ -139,7 +153,7 @@ The index is just `.hearth/index.npz` (NumPy vectors) plus a small JSON of metad
 
 ## How it works
 
-- **One dependency-free Ollama client** (`hearth/ollama.py`) talks to `localhost:11434` using only the standard library.
+- **Dependency-free backends** (`hearth/ollama.py`, `hearth/backends.py`) talk to your local runtime (Ollama's native API or any OpenAI-compatible `/v1` server) using only the standard library.
 - **Redaction** is a hybrid: deterministic, validated regex detectors do the heavy lifting (a credit-card match must pass a Luhn check, etc.), with an *optional* LLM pass for free-text PII. Overlapping matches are resolved leftmost-longest so spans never collide.
 - **Search** chunks files into overlapping windows, embeds them with `nomic-embed-text`, and stores L2-normalised vectors so a query is a single dot product. No vector database to run.
 
@@ -149,6 +163,8 @@ It's ~700 lines of readable Python. Read it in one sitting.
 
 | Env var | Default | Purpose |
 |---------|---------|---------|
+| `HEARTH_BACKEND` | `ollama` | Inference backend: `ollama`, `llamacpp`, `mlx`, `lmstudio`, `vllm`, `openai` |
+| `HEARTH_BASE_URL` | per-backend | Base URL for an OpenAI-compatible backend (e.g. `http://localhost:8080/v1`) |
 | `OLLAMA_HOST` | `http://localhost:11434` | Where your Ollama server lives |
 | `HEARTH_CHAT_MODEL` | `qwen3.5:9b` | Model for `--llm` and `--explain` |
 | `HEARTH_EMBED_MODEL` | `nomic-embed-text` | Model for the search index |

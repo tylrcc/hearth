@@ -27,6 +27,16 @@ class OllamaError(RuntimeError):
 class Ollama:
     host: str = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
     timeout: float = 120.0
+    kind: str = "ollama"
+    label: str = "Ollama"
+
+    @property
+    def endpoint(self) -> str:
+        return self.host
+
+    @property
+    def start_hint(self) -> str:
+        return "Start it with `ollama serve`."
 
     def _post(self, path: str, payload: dict) -> dict:
         url = f"{self.host.rstrip('/')}{path}"

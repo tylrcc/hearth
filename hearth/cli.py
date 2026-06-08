@@ -12,7 +12,8 @@ from rich.table import Table
 from rich.text import Text
 
 from . import __version__
-from .ollama import DEFAULT_CHAT_MODEL, DEFAULT_EMBED_MODEL, Ollama, OllamaError
+from .backends import BACKEND_CHOICES, BackendError, get_backend
+from .ollama import DEFAULT_CHAT_MODEL, DEFAULT_EMBED_MODEL
 from .redact import load_map, redact, restore, save_map
 from .search import build_index, search
 
@@ -27,6 +28,30 @@ def _fail(message: str) -> None:
     sys.exit(1)
 
 
+def backend_options(f):
+    """Shared --backend / --url options for commands that run a model."""
+    f = click.option("--url", "base_url", default=None, metavar="URL",
+                     help="Override the backend base URL "
+                          "(e.g. http://localhost:8080/v1).")(f)
+    f = click.option("--backend", default=None,
+                     help=f"Inference backend: {', '.join(BACKEND_CHOICES)} "
+                          "(default: ollama, or $HEARTH_BACKEND).")(f)
+    return f
+
+
+def _open_backend(backend: str | None, base_url: str | None):
+    """Build a backend and make sure it is reachable, or exit with a clear error."""
+    try:
+        client = get_backend(backend, base_url)
+    except BackendError as exc:
+        _fail(str(exc))
+    if not client.is_up():
+        err.print(f"[bold red]error[/] {client.label} not reachable at "
+                  f"{client.endpoint}. {client.start_hint}")
+        sys.exit(1)
+    return client
+
+
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__, "-V", "--version", prog_name="hearth")
 def main() -> None:
@@ -37,6 +62,10 @@ def main() -> None:
     hearth restore  put the originals back into the model's reply
     hearth index    build a local semantic index of a codebase
     hearth search   find code by meaning, fully offline
+
+    \b
+    Backends: Ollama (default), llama.cpp, MLX, LM Studio, vLLM, or any
+    OpenAI-compatible server. Pick one with --backend / $HEARTH_BACKEND.
     """
 
 
@@ -54,10 +83,11 @@ def main() -> None:
 @click.option("--no-map", is_flag=True, help="Do not write a map (irreversible).")
 @click.option("-i", "--in-place", is_flag=True, help="Rewrite the input files.")
 @click.option("--stats/--no-stats", default=True, help="Print a summary to stderr.")
-def redact_cmd(files, use_llm, model, map_path, no_map, in_place, stats):
+@backend_options
+def redact_cmd(files, use_llm, model, map_path, no_map, in_place, stats,
+               backend, base_url):
     """Redact secrets & PII from FILES or stdin."""
-    if use_llm and not _ensure_up(model):
-        return
+    client = _open_backend(backend, base_url) if use_llm else None
     source = (
         {f: open(f, encoding="utf-8", errors="ignore").read() for f in files}
         if files else {"-": sys.stdin.read()}
@@ -67,7 +97,7 @@ def redact_cmd(files, use_llm, model, map_path, no_map, in_place, stats):
     total = 0
     label_counts: dict[str, int] = {}
     for name, text in source.items():
-        result = redact(text, use_llm=use_llm, model=model)
+        result = redact(text, use_llm=use_llm, model=model, client=client)
         # Offset placeholder numbers so maps across files don't collide.
         merged_map.update(result.mapping)
         total += result.total
@@ -124,16 +154,16 @@ def restore_cmd(files, map_path):
 @main.command(name="index")
 @click.argument("path", default=".", type=click.Path(exists=True, file_okay=False))
 @click.option("--model", default=DEFAULT_EMBED_MODEL, show_default=True,
-              help="Embedding model (pull with `ollama pull <model>`).")
-def index_cmd(path, model):
+              help="Embedding model (must be served by your backend).")
+@backend_options
+def index_cmd(path, model, backend, base_url):
     """Build a local semantic index of the codebase at PATH."""
-    if not _ensure_up(model):
-        return
+    client = _open_backend(backend, base_url)
     with console.status(f"[bold]Indexing[/] {os.path.abspath(path)} ..."):
         def progress(done, total):
             console.print(f"  embedded {done}/{total} chunks", end="\r")
         try:
-            store = build_index(path, model=model, progress=progress)
+            store = build_index(path, model=model, client=client, progress=progress)
         except ValueError as exc:
             _fail(str(exc))
     console.print(
@@ -151,15 +181,16 @@ def index_cmd(path, model):
               help="Add a one-line LLM explanation per hit.")
 @click.option("--model", default=DEFAULT_CHAT_MODEL, show_default=True,
               help="Chat model used for --explain.")
-def search_cmd(query, path, top, explain, model):
+@backend_options
+def search_cmd(query, path, top, explain, model, backend, base_url):
     """Find code by MEANING, e.g. hearth search "where we retry payments"."""
-    if not _ensure_up(model if explain else DEFAULT_EMBED_MODEL):
-        return
+    client = _open_backend(backend, base_url)
     try:
-        hits = search(path, query, k=top, explain=explain, chat_model=model)
+        hits = search(path, query, k=top, explain=explain, chat_model=model,
+                      client=client)
     except FileNotFoundError as exc:
         _fail(str(exc))
-    except OllamaError as exc:
+    except BackendError as exc:
         _fail(str(exc))
 
     if not hits:
@@ -187,31 +218,31 @@ def search_cmd(query, path, top, explain, model):
 # doctor
 # --------------------------------------------------------------------------- #
 @main.command()
-def doctor():
-    """Check that Ollama is reachable and required models are present."""
-    client = Ollama()
+@backend_options
+def doctor(backend, base_url):
+    """Check that your inference backend is reachable and has the right models."""
+    try:
+        client = get_backend(backend, base_url)
+    except BackendError as exc:
+        _fail(str(exc))
     table = Table(show_header=False, box=None)
     if not client.is_up():
-        err.print(f"[bold red]✗[/] Ollama not reachable at {client.host}")
-        err.print("[dim]  start it with `ollama serve`[/]")
+        err.print(f"[bold red]✗[/] {client.label} not reachable at {client.endpoint}")
+        err.print(f"[dim]  {client.start_hint}[/]")
         sys.exit(1)
-    table.add_row("[green]✓[/] Ollama", f"[dim]{client.host}[/]")
+    table.add_row(f"[green]✓[/] {client.label}", f"[dim]{client.endpoint}[/]")
     models = client.models()
-    for label, want in [("embeddings", DEFAULT_EMBED_MODEL), ("chat", DEFAULT_CHAT_MODEL)]:
-        present = any(m == want or m.startswith(want + ":") for m in models)
-        mark = "[green]✓[/]" if present else "[yellow]•[/]"
-        hint = "" if present else f"  [dim](ollama pull {want})[/]"
-        table.add_row(f"{mark} {label}", f"{want}{hint}")
+    if client.kind == "ollama":
+        for label, want in [("embeddings", DEFAULT_EMBED_MODEL),
+                            ("chat", DEFAULT_CHAT_MODEL)]:
+            present = any(m == want or m.startswith(want + ":") for m in models)
+            mark = "[green]✓[/]" if present else "[yellow]•[/]"
+            hint = "" if present else f"  [dim](ollama pull {want})[/]"
+            table.add_row(f"{mark} {label}", f"{want}{hint}")
+    else:
+        served = ", ".join(models[:4]) if models else "none reported"
+        table.add_row("[green]✓[/] served", f"[dim]{served}[/]")
     console.print(table)
-
-
-def _ensure_up(model: str | None) -> bool:
-    client = Ollama()
-    if not client.is_up():
-        err.print(f"[bold red]error[/] Ollama not reachable at {client.host}. "
-                  "Start it with `ollama serve`.")
-        sys.exit(1)
-    return True
 
 
 if __name__ == "__main__":
