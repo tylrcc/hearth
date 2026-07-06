@@ -88,7 +88,7 @@ Pick a backend per-command with `--backend` (`ollama`, `llamacpp`, `mlx`, `lmstu
 
 ---
 
-## 🛡️ `hearth redact` — scrub secrets before they leak
+## 🛡️ `hearth redact`, scrub secrets before they leak
 
 Pipe anything in. hearth replaces secrets and PII with stable placeholders and writes a **reversible** map so you can put the real values back into the model's reply.
 
@@ -115,7 +115,7 @@ $ pbpaste | hearth restore   # placeholders → real values again
 
 **Detected out of the box (high-precision, regex-validated):** emails, IPv4/IPv6, MAC addresses, phone numbers, US SSNs, credit cards (Luhn-checked), AWS keys, GitHub/Slack/Stripe/OpenAI/Google keys, JWTs, private-key blocks, and generic `SECRET=...` assignments.
 
-**Catch the fuzzy stuff too** — names, street addresses, org names — with an optional local-LLM pass:
+**Catch the fuzzy stuff too**, names, street addresses, org names, with an optional local-LLM pass:
 
 ```bash
 $ hearth redact --llm incident-report.md > safe-report.md
@@ -125,7 +125,7 @@ The LLM only ever sees your data locally, and hearth trusts only verbatim substr
 
 ---
 
-## 🔎 `hearth search` — find code by meaning, offline
+## 🔎 `hearth search`, find code by meaning, offline
 
 Index once, then ask questions in plain English. Great for landing in an unfamiliar repo or finding "that thing we wrote months ago."
 

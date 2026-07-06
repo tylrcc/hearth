@@ -1,4 +1,4 @@
-"""Redaction tests. These run fully offline — no Ollama required."""
+"""Redaction tests. These run fully offline, no Ollama required."""
 
 from hearth.redact import redact, restore
 from hearth.redact.detectors import detect

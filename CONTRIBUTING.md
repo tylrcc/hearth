@@ -13,7 +13,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-The test suite is **fully offline** — embeddings and LLM calls are stubbed, so
+The test suite is **fully offline**, embeddings and LLM calls are stubbed, so
 you do not need Ollama running to develop or to pass CI.
 
 ## Good first contributions

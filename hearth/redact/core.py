@@ -79,7 +79,7 @@ def redact(
 
 
 def restore(text: str, mapping: dict[str, str]) -> str:
-    """Inverse of :func:`redact` — swap placeholders back to originals."""
+    """Inverse of :func:`redact`, swap placeholders back to originals."""
     # Replace longer tokens first so e.g. <EMAIL_10> isn't clobbered by <EMAIL_1>.
     for token in sorted(mapping, key=len, reverse=True):
         text = text.replace(token, mapping[token])

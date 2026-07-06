@@ -2,12 +2,12 @@
 
 hearth speaks to whatever local runtime you already have:
 
-* **Ollama** — its native API (the default).
+* **Ollama**, its native API (the default).
 * **llama.cpp** (``llama-server``), **MLX** (``mlx_lm.server``), **LM Studio**,
   **vLLM**, and anything else exposing an **OpenAI-compatible** ``/v1`` API.
 
-Both backends present the same tiny surface — ``is_up``, ``models``,
-``generate``, ``embed`` — so the rest of hearth never cares which one is in use.
+Both backends present the same tiny surface, ``is_up``, ``models``,
+``generate``, ``embed``, so the rest of hearth never cares which one is in use.
 Everything still targets a local host; no traffic leaves your machine.
 """
 
